@@ -1,7 +1,7 @@
 from flask import Flask, request, render_template,  redirect, jsonify, url_for, session
 import sqlite3
 import os
-
+print("DB exists:", os.path.exists(DATABASE))
 # 1️⃣ Create the Flask app
 app = Flask(__name__)
 app.secret_key = "your_secret_key"
@@ -9,7 +9,7 @@ app.secret_key = "your_secret_key"
 
 # --- Database setup ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATABASE = os.path.join(BASE_DIR, "golf.db")
+DATABASE = os.path.join(BASE_DIR, "Golf.db")
 
 
 def get_db():
