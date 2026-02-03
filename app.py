@@ -18,7 +18,9 @@ def init_db():
         handicap_index REAL
     )
     """)
-
+    cursor.execute("SELECT COUNT(*) FROM player")
+    if cursor.fetchone()[0] == 0:
+        cursor.execute("INSERT INTO player (player_name, handicap_index) VALUES (?, ?)", ("Test Player", 10.0))
     conn.commit()
     conn.close()
 
