@@ -6,6 +6,7 @@ import os
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATABASE = os.path.join(BASE_DIR, "golf.db")
 
+
 def init_db():
     conn = sqlite3.connect(DATABASE)
     cursor = conn.cursor()
@@ -26,7 +27,9 @@ app = Flask(__name__)
 app.secret_key = "your_secret_key"
 
 # 2️⃣ Initialise DB AFTER DATABASE is defined
-init_db()
+if not os.path.exists(DATABASE):
+    init_db()
+
 
 
 
