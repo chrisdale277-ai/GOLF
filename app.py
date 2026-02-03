@@ -1,15 +1,33 @@
-from flask import Flask, request, render_template,  redirect, jsonify, url_for, session
+from flask import Flask, request, render_template, redirect, jsonify, url_for, session
 import sqlite3
 import os
+
+# --- Database setup ---
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATABASE = os.path.join(BASE_DIR, "golf.db")
+
+def init_db():
+    conn = sqlite3.connect(DATABASE)
+    cursor = conn.cursor()
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS player (
+        player_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        player_name TEXT NOT NULL,
+        handicap_index REAL
+    )
+    """)
+
+    conn.commit()
+    conn.close()
 
 # 1️⃣ Create the Flask app
 app = Flask(__name__)
 app.secret_key = "your_secret_key"
 
+# 2️⃣ Initialise DB AFTER DATABASE is defined
+init_db()
 
-# --- Database setup ---
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATABASE = os.path.join(BASE_DIR, "Golf.db")
 
 
 def get_db():
