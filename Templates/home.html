@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Golf Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h1>Golf Dashboard</h1>
+
+<div class="menu">
+    <a href="{{ url_for('log_round') }}" class="menu-button">Log a New Round</a>
+    <a href="{{ url_for('stats') }}" class="menu-button">View Stats</a>
+    <a href="{{ url_for('rounds_history') }}" class="menu-button">Previous Rounds</a>
+</div>
+
+</body>
+</html>

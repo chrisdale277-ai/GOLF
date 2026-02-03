@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Golf Stats</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .stats-container { max-width: 700px; margin: 30px auto; background-color: #1b5e20; color: white; padding: 20px; border-radius: 10px; text-align: center; }
+        .stat-item { display: inline-block; margin: 10px 20px; font-weight: bold; font-size: 1.1em; }
+        a.back-button { display: inline-block; margin-top: 20px; text-decoration: none; color: #1b5e20; font-weight: bold; background: white; padding: 5px 10px; border-radius: 5px; }
+        .chart-container { margin: 30px 0; background: white; padding: 15px; border-radius: 10px; }
+        .btn-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 20px 0; }
+        .btn-course { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 220px; height: 120px; background: linear-gradient(135deg, #ff6b6b, #f06595); color: white; text-decoration: none; border-radius: 15px; box-shadow: 0 6px 15px rgba(0,0,0,0.2); font-family: Arial, sans-serif; font-weight: bold; font-size: 18px; transition: transform 0.2s, box-shadow 0.2s; }
+        .btn-course:hover { transform: scale(1.05); box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+    </style>
+</head>
+<body>
+<div class="stats-container">
+    <h1>Golf Stats</h1>
+
+    <div class="stat-item">Rounds Played: {{ rounds_played }}</div>
+    <div class="stat-item">Avg Gross Score: {{ avg_gross }}</div>
+    <div class="stat-item">Avg Net Score: {{ avg_net }}</div>
+    <div class="stat-item">Avg Putts: {{ avg_putts }}</div>
+    <div class="stat-item">GIR %: {{ gir_percent }}%</div>
+    <div class="stat-item">FIR %: {{ fir_percent }}%</div>
+
+    <!-- Score Trend Chart -->
+    <h2>Score Trend</h2>
+    <div class="chart-container">
+        <canvas id="scoreTrendChart" width="600" height="300"></canvas>
+    </div>
+
+    <!-- Average Score Per Hole -->
+    <h2>Average Score Per Hole</h2>
+    <label for="courseSelect">Select a course:</label>
+    <select id="courseSelect">
+        <option value="">--Choose a course--</option>
+        {% for course in courses %}
+            <option value="{{ course['course_id'] }}">{{ course['name'] }}</option>
+        {% endfor %}
+    </select>
+    <div class="chart-container">
+        <canvas id="avgHoleChart" width="600" height="300"></canvas>
+    </div>
+
+    <!-- Hole Difficulty Buttons -->
+    <h2>Hole Difficulty</h2>
+    <div class="btn-container">
+        {% for course in courses %}
+            <a href="{{ url_for('hole_difficulty', course_id=course['course_id']) }}" class="btn-course">
+                <span>{{ course['name'] }}</span>
+                <small>Where you bleed strokes</small>
+            </a>
+        {% endfor %}
+    </div>
+
+    <a href="{{ url_for('dashboard') }}" class="back-button">← Back to Home</a>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Score Trend Chart
+    const trendDatesJS = JSON.parse('{{ trend_data | map(attribute="round_date") | list | tojson | safe }}');
+    const trendGrossJS = JSON.parse('{{ trend_data | map(attribute="total_score") | list | tojson | safe }}');
+    const trendNetJS = JSON.parse('{{ trend_data | map(attribute="net_score") | list | tojson | safe }}');
+
+    new Chart(document.getElementById('scoreTrendChart').getContext('2d'), {
+        type: 'line',
+        data: { labels: trendDatesJS, datasets: [
+            { label: 'Gross Score', data: trendGrossJS, borderColor: 'rgba(75,192,192,1)', backgroundColor: 'rgba(75,192,192,0.2)', tension: 0.2 },
+            { label: 'Net Score', data: trendNetJS, borderColor: 'rgba(255,99,132,1)', backgroundColor: 'rgba(255,99,132,0.2)', tension: 0.2 }
+        ]},
+        options: { responsive: true, plugins: { legend: { position: 'top' }, title: { display: true, text: 'Score Trends' } } }
+    });
+
+    // Average Score Per Hole Chart
+    let avgHoleChart = null;
+    document.getElementById("courseSelect").addEventListener("change", async function () {
+        const courseId = this.value;
+        if (!courseId) return;
+
+        const res = await fetch(`/stats/avg_score_per_hole/${courseId}`);
+        const data = await res.json();
+        console.log("Fetched data:", data);
+
+
+        const labels = data.map(d => `Hole ${d.hole_number}`);
+        const avgScores = data.map(d => d.avg_score);
+        const parValues = data.map(d => d.par);
+
+        const ctx = document.getElementById("avgHoleChart").getContext("2d");
+        if (avgHoleChart) avgHoleChart.destroy();
+
+        avgHoleChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels,
+                datasets: [
+                    { label: 'Avg Strokes', data: avgScores, borderColor: 'rgba(75,192,192,1)', backgroundColor: 'rgba(75,192,192,0.2)', tension: 0.3 },
+                    { label: 'Par', data: parValues, borderColor: 'rgba(0,0,0,0.5)', borderDash: [6,6], fill: false, tension: 0.1 }
+                ]
+            },
+            options: { responsive: true, plugins: { legend: { position: 'top' }, title: { display: true, text: 'Average Score Per Hole' } } }
+        });
+    });
+</script>
+</body>
+</html>

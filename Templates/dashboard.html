@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .buttons a {
+            display: inline-block;
+            margin-right: 10px;
+            padding: 8px 12px;
+            background-color: #1b5e20;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+        .buttons a:hover {
+            background-color: #145214;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Welcome, {{ player["player_name"] }}!</h1>
+
+        <p>Average Score: {{ stats.avg_score }}</p>
+        <p>Best Round: {{ stats.best_score }}</p>
+        <p>Last Round: {{ stats.last_score or 'None yet' }}</p>
+        <p>Your handicap: {{ player["handicap_index" or N/A] }}</p>
+
+
+        <div class="buttons">
+            <a href="{{ url_for('log_round') }}">Start New Round</a>
+
+            {% if stats.last_round_id %}
+                <a href="{{ url_for('view_round', round_id=stats.last_round_id) }}">
+                    View Last Round
+                </a>
+            {% else %}
+                <a href="{{ url_for('rounds_history') }}">
+                    View Past Rounds
+                </a>
+            {% endif %}
+            <a href="{{ url_for('rounds_history')}}" class="back-button"> View Previous Rounds</a>
+            <a href="{{ url_for('stats') }}">Detailed Stats</a>
+        </div>
+
+        <hr>
+        <a href="{{ url_for('select_player') }}"class="back-button">Switch Player</a>
+    </div>
+</body>
+</html>

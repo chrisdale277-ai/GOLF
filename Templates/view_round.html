@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>View Round</title>
+<link rel="stylesheet" href="{{url_for('static',filename='style.css')}}">
+ <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            text-align: center;
+        }
+        th {
+            background-color: #1b5e20;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        a.back-button {
+            display: inline-block;
+            margin-top: 15px;
+            text-decoration: none;
+            color: #1b5e20;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+<h1>Round on {{ round['round_date'] }} at {{ round['course_name'] }}</h1>
+<p><strong>Gross Score:</strong> {{ round['total_score'] }}</p>
+<p><strong>Course Handicap:</strong> {{ round['course_handicap'] }}</p>
+<p><strong>Net Score:</strong> {{ round['net_score'] }}</p>
+<p><strong>Notes:</strong> {{ round['notes'] or 'None' }}</p>
+
+<table>
+    <tr>
+        <th>Hole</th>
+        <th>Strokes</th>
+        <th>Putts</th>
+        <th>FIR</th>
+        <th>GIR</th>
+    </tr>
+    {% for s in scores %}
+    <tr>
+        <td>{{ s['hole_number'] }}</td>
+        <td>{{ s['strokes'] }}</td>
+        <td>{{ s['putts'] }}</td>
+        <td>{{ 'Yes' if s['FIR'] else 'No' }}</td>
+        <td>{{ 'Yes' if s['green_in_reg'] else 'No' }}</td>
+    </tr>
+    {% endfor %}
+</table>
+<a href="{{ url_for('dashboard')}}" class="back-button">← Back to Dashboard</a>
+<a href="{{ url_for('rounds_history')}}" class="back-button"> View Previous Rounds</a>
+<a href="{{ url_for('edit_round', round_id=round['round_id']) }}" class="back-button">Edit Round</a>
+
+</div>
+</body>
+</html>

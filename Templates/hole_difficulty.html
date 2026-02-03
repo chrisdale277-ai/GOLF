@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Hole Difficulty</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+        }
+        #chartContainer {
+            width: 80%;
+            margin: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Hole Difficulty Ranking</h1>
+    <div id="chartContainer">
+        <canvas id="difficultyChart"></canvas>
+    </div>
+
+    <script>
+        // Prepare data from Flask
+        const holesData = JSON.parse('{{ holes | tojson | safe }}');
+        const labels = holesData.map(h => "Hole " + h.hole_number);
+        const data = holesData.map(h => parseFloat(h.avg_over_under_par).toFixed(2));
+
+        const backgroundColors = holesData.map(h => {
+            return h.avg_over_under_par > 0 ? 'rgba(255,99,132,0.7)' : 'rgba(75,192,192,0.7)';
+        });
+
+        const ctx = document.getElementById('difficultyChart').getContext('2d');
+        const difficultyChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Avg Over/Under Par',
+                    data: data,
+                    backgroundColor: backgroundColors
+                }]
+            },
+            options: {
+                indexAxis: 'y', // horizontal bars
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.raw > 0 
+                                    ? `+${context.raw} over par` 
+                                    : `${context.raw} under par`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: { beginAtZero: true, title: { display: true, text: 'Strokes Over/Under Par' } },
+                    y: { title: { display: true, text: 'Hole #' } }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

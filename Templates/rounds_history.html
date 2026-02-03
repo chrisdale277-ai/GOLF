@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Previous Rounds</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            text-align: center;
+        }
+        th {
+            background-color: #1b5e20;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        a.back-button {
+            display: inline-block;
+            margin-top: 15px;
+            text-decoration: none;
+            color: #1b5e20;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Previous Rounds</h1>
+    <a href="{{ url_for('dashboard') }}" class="back-button">← Back to Home</a>
+
+    {% if rounds %}
+    <table>
+        <tr>
+            <th>Date</th>
+            <th>Course</th>
+            <th>Gross Score</th>
+            <th>Course Handicap</th>
+            <th>Net Score</th>
+            <th>View Details</th>
+        </tr>
+        {% for round in rounds %}
+        <tr>
+            <td>{{ round['round_date'] }}</td>
+            <td>{{ round['course_name'] }}</td>
+            <td>{{ round['total_score'] or '-' }}</td>
+            <td>{{ round['course_handicap'] or '-' }}</td>
+            <td>{{ round['net_score'] or '-' }}</td>
+            <td><a href="{{ url_for('view_round', round_id=round['round_id']) }}">View/Edit</a></td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% else %}
+    <p>No rounds recorded yet.</p>
+    {% endif %}
+</div>
+</body>
+</html>

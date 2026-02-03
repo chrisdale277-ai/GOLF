@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+		<title>New Round</title>
+	</head>
+	<body>
+		<div class="container">
+			<h1>Start New Round</h1>
+
+			<a href="{{ url_for('dashboard') }}" class="back-button">&larr; Back to Home</a>
+
+			<form method="POST" action="">
+				<label>Course:</label>
+				<select name="course_id" required>
+					<option value="">-- Select Course --</option>
+					{% for course in courses %}
+                     <option value="{{ course['course_id'] }}">{{ course['name'] }}</option>
+                     {% endfor %}
+
+				</select><br>
+
+				<label>Date:</label>
+				<input type="date" name="round_date" required><br>
+
+				<label>Tees:</label>
+				<input type="text" name="tees"><br>
+
+				<label>Weather:</label>
+				<input type="text" name="weather"><br>
+
+				<label>Notes:</label>
+				<input type="text" name="notes"><br>
+
+				<button type="submit">Start Round</button>
+			</form>
+		</div>
+	</body>
+</html>

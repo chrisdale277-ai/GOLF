@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add Holes for {{ course.name }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="container">
+    <h1>Add Holes for {{ course.name }}</h1>
+    <form method="POST">
+        {% for i in range(1, num_holes + 1) %}
+            <label>Hole {{ i }} Par:</label>
+            <input type="number" name="par_{{ i }}" placeholder="Par for hole {{ i }}" required>
+            
+            <label>Hole {{ i }} Yardage:</label>
+            <input type="number" name="yardage_{{ i }}" placeholder="Yardage for hole {{ i }}" required>
+            <br><br>
+        {% endfor %}
+        <button type="submit">Save Holes</button>
+    </form>
+    <a href="{{ url_for('select_player') }}">← Back </a>
+</div>
+</body>
+</html>

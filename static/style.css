@@ -1,0 +1,342 @@
+body {
+font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+background: linear-gradient(to bottom, #e6f4ea, #ffffff);
+margin: 0;
+padding: 0;
+
+background-image: url("/static/golf-bg.jpg");
+background-size: cover;
+background-position: center;
+background-attachment: fixed;
+}
+
+.container {
+Background: rgba(255, 255, 255, 0.92);
+max-width: 600px;
+margin: 60px auto;
+background: white;
+padding: 30px;
+border-radius: 12px;
+box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+h1 {
+text-align: center;
+color: #1b5e20;
+}
+
+label {
+display: block;
+margin-top: 15px;
+font-weight: 600;
+}
+
+input, select, button {
+width: 100%;
+padding: 10px;
+margin-top: 6px;
+border-radius: 6px;
+border: 1px solid #ccc;
+font-size: 16px;
+}
+
+button {
+margin-top: 25px;
+background-color: #2e7d32;
+color: white;
+border: none;
+cursor: pointer;
+}
+
+button:hover {
+background-color: #1b5e20;
+}
+
+.scorecard {
+display: grid;
+grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+gap: 12px;
+margin-top: 20px;
+Width: 100%;
+
+}
+
+.hole-card {
+background: #f1f8f4;
+border-radius: 12px;
+padding: 12px;
+Box-sizing: border-box;  /* include padding in width */
+Text-align: center;
+Display: flex;
+Flex-direction: column;
+Align-items: center;
+Gap: 8px;
+Box-shadow: - 2px 6px rgba(0,0,0,0.15);
+Transition: transform 0.15s;}
+
+.hole-card:hover{
+	transform: translateY(-2px);}
+
+
+.hole-number {
+font-weight: 700;
+Font-size: 14px;
+color: #2e7d32;
+}
+
+.par {
+Font-weight: 600;
+font-size: 14px;
+color: #388e3c;
+margin-bottom: 6px;
+}
+
+.hole-card input {
+width: 60px;
+text-align: center;
+margin: 0 auto;
+}
+
+.score-under{
+Background: #e8f5e9;
+}
+
+.score-over{
+Background: #ffebee;
+}
+
+.score-even{
+Background: #fffde7;
+}
+
+.summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+    background: #1b5e20;
+    color: white;
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    text-align: center;
+    font-weight: 600;
+}
+
+/* Make the totals box horizontal inside the summary */
+.totals-box {
+    display: flex;            /* arrange items horizontally */
+    justify-content: center;  /* center the items in the available space */
+    gap: 20px;                /* space between Gross, Net, etc. */
+    margin-top: 10px;         /* spacing from items above */
+    
+    /* grid-specific */
+    grid-column: 1 / -1;      /* span all columns of the parent grid */
+}
+
+
+.totals-box p {
+    margin: 0;               /* remove default spacing */
+}
+
+
+.hole-card{
+	display:block !important;
+	visibility: visible !important;
+	opacity: 1 !important;
+	border: 2px solid green;
+}
+
+.inputs {
+display: flex;
+Flex-direction: column;
+gap: 4px;
+Align-items: center;
+margin-top: 6px; /* optional spacing from par/hole number */
+}
+
+.inputs input[type="number"] {
+width: 50px;
+text-align: center;
+padding: 6px;
+border-radius: 6px;
+border: 1px solid #a5d6a7;
+Background-color: #ffffff;
+Font-weight: 500;
+Font-size: 14px;
+}
+
+.inputs input[type="checkbox"] {
+transform: scale(1.2);
+Margin-top: 4px;
+Cursor: pointer;
+}
+
+/* Container for all hole cards */
+.scorecard {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+gap: 14px; /* spacing between hole cards */
+margin-top: 20px;
+width: 100%;
+}
+
+/* Individual hole card */
+.hole-card {
+background: #f1f8f4;
+border-radius: 10px;
+padding: 10px;
+box-sizing: border-box;
+text-align: center;
+
+display: flex;
+flex-direction: column; /* stack content vertically */
+align-items: center;
+gap: 6px; /* spacing inside card */
+}
+
+/* Inputs stacked vertically */
+.inputs {
+display: flex;
+flex-direction: column; /* vertical stack for Score / Putts / FIR */
+gap: 4px;
+align-items: center;
+}
+
+.inputs input[type="number"] {
+width: 50px;
+text-align: center;
+padding: 4px;
+border-radius: 5px;
+border: 1px solid #aaa;
+}
+
+.inputs input[type="checkbox"] {
+transform: scale(1.2);
+margin-top: 4px;
+}
+
+@media (max-width: 600px) {
+.scorecard {
+grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+gap: 10px;
+}
+
+.hole-card {
+padding: 8px;
+}
+
+.inputs input[type="number"] {
+width: 40px;
+font-size: 12px;
+}
+}
+
+.menu {
+    display: flex;               /* horizontal row */
+    justify-content: center;     /* center horizontally */
+    gap: 20px;                   /* space between buttons */
+    margin-top: 30px;            /* optional spacing from header */
+    flex-wrap: wrap;             /* wrap to next line on small screens */
+}
+
+.menu-button {
+    padding: 12px 20px;
+    background-color: #2e7d32;
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+}
+
+.menu-button:hover {
+    background-color: #1b5e20;
+}
+
+.back-button {
+    display: inline-block;
+    margin-bottom: 20px;
+    padding: 8px 14px;
+    background-color: #eeeeee;
+    color: #333;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: 600;
+}
+
+.back-button:hover {
+    background-color: #dddddd;
+}
+
+.chart {
+    margin-top: 20px;
+}
+
+.bar-group {
+    margin-bottom: 15px;
+}
+
+.label {
+    font-size: 0.9em;
+    margin-bottom: 3px;
+}
+
+.bar {
+    height: 24px;
+    line-height: 24px;
+    color: white;
+    padding-left: 6px;
+    border-radius: 4px;
+    margin-bottom: 4px;
+    font-size: 0.85em;
+}
+
+.bar.gross {
+    background-color: #2e7d32;
+}
+
+.bar.net {
+    background-color: #1565c0;
+}
+.progress label {
+    font-weight: bold;
+    display: block;
+    margin-top: 12px;
+}
+
+.progress-bar {
+    background: #ddd;
+    border-radius: 6px;
+    height: 16px;
+    overflow: hidden;
+}
+
+.progress-bar div {
+    height: 100%;
+    background: #ffb300;
+}
+.stats-container h1 {
+    color: white;  /* ensures title is visible on dark background */
+    margin-bottom: 20px;
+}
+.progress-bar {
+    width: 100%;           /* container takes full width */
+    background-color: #ddd; /* light gray background */
+    height: 20px;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.progress-bar > div {
+    height: 100%;
+    background-color: #4caf50; /* green fill */
+    width: 0%;                 /* start at 0%, will be set inline */
+    transition: width 0.3s ease;
+}
+.putts-metric {
+    font-size: 1.4em;
+    margin-bottom: 15px;
+}
+
+.putts-rating.good { color: #66ff66; }
+.putts-rating.avg { color: #ffcc00; }
+.putts-rating.bad { color: #ff6666; }

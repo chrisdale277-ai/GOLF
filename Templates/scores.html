@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Enter Scores</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="container">
+<h1>Enter Scores</h1>
+
+<a href="{% if edit_mode %}{{ url_for('view_round', round_id=round_id) }}{% else %}{{ url_for('log_round') }}{% endif %}" class="back-button">← Back</a>
+
+<div id="summary" class="summary">
+    <div>Score: <span id="total-strokes">{{ total_strokes }}</span></div>
+      <div>Putts: <span id="total-putts">{{ total_putts }}</span></div>
+      <div>GIR: <span id="gir-percent">{{ gir_percent }}</span>%</div>
+      <div>FIR: <span id="fir-percent">{{ fir_percent }}</span>%</div>
+      <div>Net: <span id="net-score">{{ total_strokes - course_handicap }}</span></div>
+      <div>Course Handicap:<span id="courseHandicap">{{ course_handicap }}</span></div>
+
+</div>
+
+
+<form method="POST">
+
+
+  {% for hole in holes %}
+<div class="hole-row flex items-center gap-4 p-2 border-b">
+    <div class="hole-number w-8">Hole {{ hole.hole_number }}</div>
+    <div class="par w-8">Par {{ hole.par }}</div>
+
+    <div class="input-strokes">
+        <input type="number" 
+               name="strokes_{{ hole.hole_number }}"
+               value="{{ existing_scores[hole.hole_number].strokes if hole.hole_number in existing_scores else '' }}">
+    </div>
+
+    <div class="input-putts">
+        <input type="number" 
+               name="putts_{{ hole.hole_number }}"
+               value="{{ existing_scores[hole.hole_number].putts if hole.hole_number in existing_scores else '' }}">
+    </div>
+
+    <div class="input-fir">
+        <input type="checkbox"
+               name="fir_{{ hole.hole_number }}"
+               {% if hole.hole_number in existing_scores and existing_scores[hole.hole_number].FIR %}checked{% endif %}>
+    </div>
+</div>
+{% endfor %}
+
+
+  <div class="submit-row mt-4">
+    <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded">
+      Save Scores
+    </button>
+  </div>
+</form>
+
+</div>
+
+<!-- JS for real-time totals -->
+<script>
+const strokesInputs = document.querySelectorAll("input[name^='strokes_']");
+const puttsInputs = document.querySelectorAll("input[name^='putts_']");
+const firInputs = document.querySelectorAll("input[name^='fir_']");
+
+function updateTotals() {
+    let totalStrokes = 0, totalPutts = 0, totalGIR = 0, totalFIR = 0;
+    strokesInputs.forEach((input, i) => {
+        const strokes = parseInt(input.value) || 0;
+        const putts = parseInt(puttsInputs[i].value) || 0;
+        const fir = firInputs[i].checked ? 1 : 0;
+
+        const par = parseInt(input.closest(".hole-row").querySelector(".par").innerText.replace("Par ", ""));
+        const strokesToGreen = Math.max(strokes - putts, 0);
+        const gir = strokesToGreen <= (par - 2) ? 1 : 0;
+
+        totalStrokes += strokes;
+        totalPutts += putts;
+        totalGIR += gir;
+        totalFIR += fir;
+    });
+
+    const numHoles = strokesInputs.length;
+    document.getElementById("total-strokes").textContent = totalStrokes;
+    document.getElementById("total-putts").textContent = totalPutts;
+    document.getElementById("gir-percent").textContent = Math.round((totalGIR / numHoles) * 100);
+    document.getElementById("fir-percent").textContent = Math.round((totalFIR / numHoles) * 100);
+}
+
+// Add event listeners
+[...strokesInputs, ...puttsInputs, ...firInputs].forEach(input => {
+    input.addEventListener("input", updateTotals);
+    input.addEventListener("change", updateTotals);
+});
+
+// Initialize totals on page load
+updateTotals();
+</script>
+
+
+</body>
+</html>
