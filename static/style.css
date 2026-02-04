@@ -340,3 +340,22 @@ font-size: 12px;
 .putts-rating.good { color: #66ff66; }
 .putts-rating.avg { color: #ffcc00; }
 .putts-rating.bad { color: #ff6666; }
+
+.flash-messages {
+    list-style: none;
+    padding: 0;
+    margin-bottom: 20px;
+}
+
+.flash-messages li.success {
+    background-color: #1b5e20;
+    color: white;
+    padding: 10px;
+    border-radius: 5px;
+}
+.flash-messages li.error {
+    background-color: #c62828;
+    color: white;
+    padding: 10px;
+    border-radius: 5px;
+}

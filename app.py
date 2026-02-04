@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, redirect, jsonify, url_for, session
+from flask import Flask, request, render_template, redirect, jsonify, url_for, session, flash
 import sqlite3
 import os
 
@@ -109,18 +109,22 @@ def get_db():
 @app.route("/", methods=["GET", "POST"])
 def select_player():
     db = get_db()
-    players = db.execute("SELECT * FROM player").fetchall()
-
-    # Convert sqlite3.Row objects to normal dicts
-    players = [dict(row) for row in players]
-
-    print("PLAYERS FROM DB (as dicts):", players)
+    try:
+        # Fetch all players from the DB
+        players = db.execute("SELECT player_id, player_name, handicap_index FROM player").fetchall()
+        players = [dict(row) for row in players]  # Convert rows to dicts
+        print("PLAYERS FROM DB (as dicts):", players)
+    finally:
+        db.close()
 
     if request.method == "POST":
-        session["player_id"] = request.form.get("player_id")
-        return redirect(url_for("dashboard"))
+        player_id = request.form.get("player_id")
+        if player_id:
+            session["player_id"] = int(player_id)  # Ensure it's an integer
+            return redirect(url_for("dashboard"))
 
     return render_template("select_player.html", players=players)
+
 
 
 @app.route("/dashboard")
@@ -163,13 +167,18 @@ def add_player():
         name = request.form.get("player_name")
         handicap = request.form.get("handicap_index")
         db = get_db()
-        db.execute("INSERT INTO player (player_name, handicap_index) VALUES (?, ?)", (name,handicap))
-        
+        db.execute(
+            "INSERT INTO player (player_name, handicap_index) VALUES (?, ?)",
+            (name, handicap)
+        )
         db.commit()
+        
+        # Flash a success message
+        flash(f"Player '{name}' added successfully!", "success")
+        
         return redirect(url_for("select_player"))
 
     return render_template("add_player.html")
-
 
 # --- Step 1: Home page route ---
 @app.route("/home")
