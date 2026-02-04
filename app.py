@@ -6,6 +6,7 @@ import os
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATABASE = os.path.join(BASE_DIR, "golf.db")
 
+print("🔥 USING DATABASE:", os.path.abspath(DATABASE))
 
 def init_db():
     conn = sqlite3.connect(DATABASE)
@@ -18,21 +19,70 @@ def init_db():
         handicap_index REAL
     )
     """)
-    cursor.execute("SELECT COUNT(*) FROM player")
-    if cursor.fetchone()[0] == 0:
-        cursor.execute("INSERT INTO player (player_name, handicap_index) VALUES (?, ?)", ("Test Player", 10.0))
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS courses (
+        course_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        location TEXT,
+        par INTEGER,
+        holes INTEGER,
+        slope_rating REAL,
+        course_rating REAL
+    )
+    """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS holes (
+        hole_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        course_id INTEGER,
+        hole_number INTEGER,
+        par INTEGER,
+        yardage INTEGER,
+        FOREIGN KEY (course_id) REFERENCES courses(course_id)
+    )
+    """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS rounds (
+        round_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        player_id INTEGER,
+        course_id INTEGER,
+        round_date TEXT,
+        tees TEXT,
+        weather TEXT,
+        notes TEXT,
+        course_handicap INTEGER,
+        total_score INTEGER,
+        FOREIGN KEY (player_id) REFERENCES player(player_id),
+        FOREIGN KEY (course_id) REFERENCES courses(course_id)
+    )
+    """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS scores (
+        score_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        round_id INTEGER,
+        player_id INTEGER,
+        hole_number INTEGER,
+        strokes INTEGER,
+        putts INTEGER,
+        FIR INTEGER,
+        green_in_reg INTEGER,
+        FOREIGN KEY (round_id) REFERENCES rounds(round_id),
+        FOREIGN KEY (player_id) REFERENCES player(player_id)
+    )
+    """)
+
     conn.commit()
     conn.close()
 
-# 1️⃣ Create the Flask app
+# ---- Flask app ----
 app = Flask(__name__)
 app.secret_key = "your_secret_key"
 
-# 2️⃣ Initialise DB AFTER DATABASE is defined
-if not os.path.exists(DATABASE):
-    init_db()
-
-
+# 🔥 ALWAYS initialise
+init_db()
 
 
 def get_db():
