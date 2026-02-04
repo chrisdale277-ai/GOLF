@@ -166,16 +166,16 @@ def add_player():
     if request.method == "POST":
         name = request.form.get("player_name")
         handicap = request.form.get("handicap_index")
+        handicap = float(handicap) if handicap else 0
+
         db = get_db()
         db.execute(
             "INSERT INTO player (player_name, handicap_index) VALUES (?, ?)",
             (name, handicap)
         )
         db.commit()
-        
-        # Flash a success message
-        flash(f"Player '{name}' added successfully!", "success")
-        
+        db.close()  # ✅ make sure connection is closed
+
         return redirect(url_for("select_player"))
 
     return render_template("add_player.html")
@@ -401,183 +401,92 @@ def calculate_handicap_index(player_id):
 
 @app.route("/log_round", methods=["GET", "POST"])
 def log_round():
-    conn = get_db()
-    cur = conn.cursor()
-
-    # Get courses for dropdown (used for both GET and POST)
+    db = get_db()
+    cur = db.cursor()
     cur.execute("SELECT course_id, name, slope_rating FROM courses ORDER BY name")
     courses = cur.fetchall()
 
     if request.method == "POST":
-        # Get selected course
-        course_id = request.form.get("course_id")
-        if not course_id:
-            conn.close()
-            return "Please select a course", 400
-
-        # Fetch course info
-        cur.execute(
-            "SELECT slope_rating FROM courses WHERE course_id = ?", (course_id,)
-        )
-        course = cur.fetchone()
-        if not course:
-            conn.close()
-            return "Course not found", 404
-
-        # Ensure player is selected
+        course_id = int(request.form.get("course_id"))
+        round_date = request.form.get("round_date")
+        tees = request.form.get("tees") or ""
+        weather = request.form.get("weather") or ""
+        notes = request.form.get("notes") or ""
         player_id = session.get("player_id")
         if not player_id:
-            conn.close()
+            db.close()
             return redirect(url_for("select_player"))
 
-        # Fetch player's handicap_index
-        cur.execute(
-            "SELECT handicap_index FROM player WHERE player_id = ?", (player_id,)
-        )
-        player_row = cur.fetchone()
-        if not player_row:
-            conn.close()
-            return "Player not found", 404
+        cur.execute("SELECT handicap_index FROM player WHERE player_id = ?", (player_id,))
+        handicap_index = cur.fetchone()["handicap_index"] or 0
 
-        handicap_index = player_row["handicap_index"] or 0
+        cur.execute("SELECT slope_rating FROM courses WHERE course_id = ?", (course_id,))
+        slope_rating = cur.fetchone()["slope_rating"] or 113
 
-        # Calculate course handicap safely
-        slope_rating = course["slope_rating"] or 113  # default to 113 if None
         course_handicap = round(handicap_index * (slope_rating / 113))
 
-        # Collect form data
-        round_date = request.form.get("round_date")
-        tees = request.form.get("tees", "")
-        weather = request.form.get("weather", "")
-        notes = request.form.get("notes", "")
-
-        # Insert new round
-        cur.execute(
-            """
-            INSERT INTO rounds (
-                course_id, round_date, tees, weather, notes, course_handicap, player_id
-            )
+        cur.execute("""
+            INSERT INTO rounds (course_id, round_date, tees, weather, notes, course_handicap, player_id)
             VALUES (?, ?, ?, ?, ?, ?, ?)
-            """,
-            (course_id, round_date, tees, weather, notes, course_handicap, player_id),
-        )
+        """, (course_id, round_date, tees, weather, notes, course_handicap, player_id))
         round_id = cur.lastrowid
-        conn.commit()
+        db.commit()
+        db.close()
 
-        # Recalculate player handicap after new round
-        new_handicap = calculate_handicap_index(player_id)
-        if new_handicap is not None:
-            cur.execute(
-                "UPDATE player SET handicap_index = ? WHERE player_id = ?",
-                (new_handicap, player_id),
-            )
-            conn.commit()
-
-        conn.close()
         return redirect(url_for("enter_scores", round_id=round_id))
 
-    # GET request
-    conn.close()
+    db.close()
     return render_template("log_round.html", courses=courses)
-
 
 
 
 # Enter scores for a round
 @app.route("/enter_scores/<int:round_id>", methods=["GET", "POST"])
 def enter_scores(round_id):
-    conn = get_db()
-    cur = conn.cursor()
+    db = get_db()
+    cur = db.cursor()
 
-    # Get course handicap
-    cur.execute(
-        """SELECT course_handicap FROM rounds WHERE round_id = ?""", (round_id,)
-    )
+    cur.execute("SELECT course_id, course_handicap FROM rounds WHERE round_id=?", (round_id,))
     round_info = cur.fetchone()
-    course_handicap = round_info[0] if round_info else 0
-
-    # Get course info for this round
-    cur.execute("SELECT course_id FROM rounds WHERE round_id=?", (round_id,))
-    course = cur.fetchone()
-    if not course:
+    if not round_info:
+        db.close()
         return "Round not found", 404
-    course_id = course[0]
 
-    # Get holes for this course
-    cur.execute(
-        "SELECT hole_number, par FROM holes WHERE course_id=? ORDER BY hole_number",
-        (course_id,),
-    )
+    course_id = round_info["course_id"]
+    course_handicap = round_info["course_handicap"]
+
+    cur.execute("SELECT hole_number, par FROM holes WHERE course_id=? ORDER BY hole_number", (course_id,))
     holes = cur.fetchall()
 
-    total_strokes = 0
-    gross_score = 0
-    net_score = 0
-    edit_mode = False
-
     if request.method == "POST":
+        total_strokes = 0
         for hole in holes:
             hole_number = hole["hole_number"]
             par = hole["par"]
             player_id = session.get("player_id")
+
             strokes = int(request.form.get(f"strokes_{hole_number}") or 0)
             putts = int(request.form.get(f"putts_{hole_number}") or 0)
             FIR = 1 if request.form.get(f"fir_{hole_number}") else 0
-
-            strokes_to_green = max(strokes - putts, 0)
-            max_strokes_to_gir = par - 2
-            green_in_reg = 1 if strokes_to_green <= max_strokes_to_gir else 0
+            green_in_reg = 1 if max(strokes - putts, 0) <= par - 2 else 0
 
             total_strokes += strokes
 
-        # ✅ INSERT MUST BE INSIDE THE LOOP
             if strokes > 0:
-                cur.execute(
-                    """
-                    INSERT INTO scores (
-                        round_id,
-                        hole_number,
-                        strokes,
-                        putts,
-                        FIR,
-                        green_in_reg,
-                        player_id
-                    )
+                cur.execute("""
+                    INSERT INTO scores (round_id, hole_number, strokes, putts, FIR, green_in_reg, player_id)
                     VALUES (?, ?, ?, ?, ?, ?, ?)
-                    """,
-                    (round_id, hole_number, strokes, putts, FIR, green_in_reg, player_id),
-                )
+                """, (round_id, hole_number, strokes, putts, FIR, green_in_reg, player_id))
 
-        gross_score = total_strokes
-        net_score = gross_score - course_handicap
-
-        cur.execute(
-            """
-            UPDATE rounds
-            SET total_score = ?
-            WHERE round_id = ?
-            """,
-            (total_strokes, round_id),
-        )
-
-        conn.commit()
-        conn.close()
+        cur.execute("UPDATE rounds SET total_score=? WHERE round_id=?", (total_strokes, round_id))
+        db.commit()
+        db.close()
         return render_template("scores_saved.html", round_id=round_id)
 
+    db.close()
+    return render_template("scores.html", round_id=round_id, holes=holes, course_handicap=course_handicap)
 
 
-    conn.close()
-
-    return render_template(
-        "scores.html",
-        round_id=round_id,
-        holes=holes,
-        gross_score=gross_score,
-        course_handicap=course_handicap,
-        net_score=net_score,
-        total_strokes=total_strokes,
-        edit_mode=False,
-    )
 @app.route("/edit_round/<int:round_id>", methods=["GET", "POST"])
 def edit_round(round_id):
     # Ensure a player is selected
@@ -667,8 +576,6 @@ def edit_round(round_id):
             WHERE player_id = ?
         """, (handicap, session["player_id"]))
         conn.commit()
-
-        conn.commit()
         conn.close()
         return redirect(url_for("view_round", round_id=round_id))
 
@@ -722,7 +629,6 @@ def avg_score_per_hole(course_id):
             LEFT JOIN rounds r
             ON s.round_id = r.round_id
         WHERE h.course_id = ?
-          AND r.course_id = h.course_id
           AND r.player_id = ?
         GROUP BY h.hole_number, h.par
         ORDER BY h.hole_number ASC
@@ -741,9 +647,6 @@ def avg_score_per_hole(course_id):
 
     return jsonify(holes)
 
-
-# Get hole diffculty stats
-DATABASE = "golf.db"
 
 def get_hole_difficulty(course_id):
     # Make sure we have a player selected
@@ -801,69 +704,62 @@ def add_course():
     if request.method == "POST":
         name = request.form.get("name")
         location = request.form.get("location")
-        par = request.form.get("par")
-        holes = request.form.get("holes")
-        slope_rating = request.form.get("slope_rating") or None
-        course_rating = request.form.get("course_rating") or None
+        par = int(request.form.get("par"))
+        holes = int(request.form.get("holes"))
+        slope_rating = request.form.get("slope_rating")
+        course_rating = request.form.get("course_rating")
 
-        # Validate required fields
-        if not name or not par or not holes:
-            return "Name, par, and holes are required", 400
+        slope_rating = float(slope_rating) if slope_rating else None
+        course_rating = float(course_rating) if course_rating else None
 
-        conn = get_db()
-        cur = conn.cursor()
+        db = get_db()
+        cur = db.cursor()
         cur.execute("""
             INSERT INTO courses (name, location, par, holes, slope_rating, course_rating)
             VALUES (?, ?, ?, ?, ?, ?)
-        """, (name, location, int(par), int(holes), float(slope_rating) if slope_rating else None, float(course_rating) if course_rating else None))
-        conn.commit()
-        
-
-         # Get the ID of the newly inserted course
+        """, (name, location, par, holes, slope_rating, course_rating))
+        db.commit()
         course_id = cur.lastrowid
-        conn.close()
+        db.close()
 
-        # Redirect to the add_holes page for this course
+        # Redirect to add holes for this course
         return redirect(url_for("add_holes", course_id=course_id))
 
-    # GET request renders form
+    # GET request renders the form
     return render_template("add_course.html")
+
+
+      
 
 @app.route("/add_holes/<int:course_id>", methods=["GET", "POST"])
 def add_holes(course_id):
-    conn = get_db()
-    cur = conn.cursor()
-
-    # Get course info
+    db = get_db()
+    cur = db.cursor()
     cur.execute("SELECT name, holes FROM courses WHERE course_id = ?", (course_id,))
     course = cur.fetchone()
     if not course:
-        conn.close()
+        db.close()
         return "Course not found", 404
 
     num_holes = course["holes"]
 
     if request.method == "POST":
-        # Insert each hole with par and yardage
         for i in range(1, num_holes + 1):
-            par = request.form.get(f"par_{i}")
-            yardage = request.form.get(f"yardage_{i}")
-            if not par or not yardage:
-                continue
-            cur.execute("""
-                INSERT INTO holes (course_id, hole_number, par, yardage)
-                VALUES (?, ?, ?, ?)
-            """, (course_id, i, int(par), int(yardage)))
-        conn.commit()
-        conn.close()
+            par = request.form.get(f"par_{i}").strip()
+            yardage = request.form.get(f"yardage_{i}").strip()
+
+            if par and yardage:
+                cur.execute(
+                    "INSERT INTO holes (course_id, hole_number, par, yardage) VALUES (?, ?, ?, ?)",
+                    (course_id, i, int(par), int(yardage))
+                )
+        db.commit()
+        db.close()
         return redirect(url_for("log_round"))
 
-    conn.close()
+    db.close()
     return render_template("add_holes.html", course=course, num_holes=num_holes)
 
-
-    conn.close()
-    return render_template("add_holes.html", course=course, num_holes=num_holes)
 
 
 if __name__ == "__main__":
