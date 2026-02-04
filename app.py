@@ -7,11 +7,17 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATABASE = os.path.join(BASE_DIR, "golf.db")
 
 print("🔥 USING DATABASE:", os.path.abspath(DATABASE))
+# ---- Flask app ----
+app = Flask(__name__)
+app.secret_key = "your_secret_key"
 
-def init_db():
+# 🔥 ALWAYS initialise
+def init_db_and_seed():
+    """Create tables if missing and seed Test Player"""
     conn = sqlite3.connect(DATABASE)
     cursor = conn.cursor()
 
+    # --- Players ---
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS player (
         player_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -20,6 +26,7 @@ def init_db():
     )
     """)
 
+    # --- Courses ---
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS courses (
         course_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -32,6 +39,7 @@ def init_db():
     )
     """)
 
+    # --- Holes ---
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS holes (
         hole_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -43,6 +51,7 @@ def init_db():
     )
     """)
 
+    # --- Rounds ---
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS rounds (
         round_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -59,6 +68,7 @@ def init_db():
     )
     """)
 
+    # --- Scores ---
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS scores (
         score_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -74,15 +84,21 @@ def init_db():
     )
     """)
 
+    # ✅ Seed Test Player if missing
+    cursor.execute("SELECT * FROM player WHERE player_name = ?", ("Test Player",))
+    if cursor.fetchone() is None:
+        cursor.execute(
+            "INSERT INTO player (player_name, handicap_index) VALUES (?, ?)",
+            ("Test Player", 10.0)
+        )
+        print("✅ Test Player added to DB")
+
     conn.commit()
     conn.close()
 
-# ---- Flask app ----
-app = Flask(__name__)
-app.secret_key = "your_secret_key"
 
-# 🔥 ALWAYS initialise
-init_db()
+# 🔥 Always call this before running the app
+init_db_and_seed()
 
 
 def get_db():
