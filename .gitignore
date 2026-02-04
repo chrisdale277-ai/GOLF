@@ -1,3 +1,4 @@
-golf.db.DS_Store
 golf.db
-golf.db
+__pycache__/
+*.pyc
+.DS_Store
