@@ -9,7 +9,7 @@ DATABASE = os.path.join(BASE_DIR, "golf.db")
 print("🔥 USING DATABASE:", os.path.abspath(DATABASE))
 # ---- Flask app ----
 app = Flask(__name__)
-app.secret_key = "your_secret_key"
+app.secret_key = "golf123!@#"
 
 # 🔥 ALWAYS initialise
 def init_db_and_seed():
